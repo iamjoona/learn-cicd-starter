@@ -8,13 +8,20 @@ jobs:
     Deploy:
         name: Deploy
         runs-on: ubuntu-latest
+
+        env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
         permissions:
             contents: 'read'
             id-token: 'write'
 
         steps:
             - name: Check out code
-              uses: actions/checkout@v4            
+              uses: actions/checkout@v4       
+              
+            - name: Install Goose
+              run:  go install github.com/pressly/goose/v3@latest
             
             - name: Set up Go
               uses: actions/setup-go@v5
@@ -42,6 +49,9 @@ jobs:
             - name: Auth with Artifact Registry
               run: |
                 gcloud auth configure-docker us-central1-docker.pkg.dev
+
+            - name: Run db migration
+              run: ./scripts/migrateup.sh
 
             - name: Deploy to GCP
               run: |
